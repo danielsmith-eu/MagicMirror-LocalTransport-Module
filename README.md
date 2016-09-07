@@ -17,7 +17,7 @@ Go to your MagicMirror folder.
 
 Clone the repository.
 
-`git clone https://github.com/CFenner/MagicMirror-LocalTransport-Module.git modules/localtransport`
+`git clone https://github.com/danielsmith-eu/MagicMirror-LocalTransport-Module.git modules/localtransport`
 
 ## Configuration
 
@@ -53,6 +53,7 @@ Add module configuration to config.js.
 |`language`|Language to display information in - german `de` or english `en`<br><br>**Default value** `is same as defined in the main config file`|
 |`units`|Units to use - `metric` or `imperial`<br><br>**Default value** `is same as defined in the main config file`|
 |`timeFormat`|`24` or `12` hour clock for displaying the arrival time<br><br>**Default value** `is same as defined in the main config file`|
+|`filterServices`|List of services (short names) to filter the routes by - e.g. London Bus route numbers: `['141','21']`, or `['Overground']`, for example. **OPTIONAL**|
 
 ## Preview of various settings
 

@@ -27,7 +27,8 @@ Module.register('localtransport', {
     alternatives: true,
     apiBase: 'https://maps.googleapis.com/',
     apiEndpoint: 'maps/api/directions/json',
-    debug: false
+    debug: false,
+    filterServices: [],
   },
   start: function() {
     Log.info('Starting module: ' + this.name);
@@ -87,6 +88,7 @@ Module.register('localtransport', {
     //var depadd = leg.start_address;
     var span = document.createElement("div");
     span.className = "small bright";
+    span.style = "padding-left: 25px";
     span.innerHTML = moment(depature).locale(this.config.language).fromNow();
     // span.innerHTML += "from " + depadd;
     if (this.config.displayArrival && this.config.timeFormat == 24){
@@ -116,7 +118,7 @@ Module.register('localtransport', {
             img.className = "symbol";
             img.src = "http://maps.gstatic.com/mapfiles/transit/iw2/6/walk.png";
             //img.src = "/localtransport/walk.png"; //needs to be saved in localtransport/public/walk.png
-            wrapper.appendChild(img)
+            wrapper.appendChild(img);
             var span = document.createElement("span");
             span.innerHTML = moment.duration(duration, 'seconds').locale(this.config.language).humanize();
             if(this.config.displayWalkType == 'short'){
@@ -124,7 +126,7 @@ Module.register('localtransport', {
                 span.innerHTML = span.innerHTML.replace(this.translate("MINUTE_SL"),this.translate("MINUTE_SS"));
                 span.innerHTML = span.innerHTML.replace(this.translate("SECOND_PL"),this.translate("SECOND_PS"));
             }
-            span.className = "xsmall dimmed";
+            span.className = "small bright";
             wrapper.appendChild(span);
         }else{
             /*skip walking*/
@@ -158,7 +160,7 @@ Module.register('localtransport', {
                 /* add vehicle type for debug*/
                 span.innerHTML += " [" + details.line.vehicle.name +"]";
             }
-            span.className = "xsmall dimmed";
+            span.className = "small bright";
             wrapper.appendChild(span);
         }
     }
@@ -177,13 +179,34 @@ Module.register('localtransport', {
     return ["localtransport.css"];
   },
   getScripts: function() {
-        return ["moment.js"];
+    return ["moment.js"];
   },
   getTranslations: function() {
     return {
         de: "i18n/de.json",
         en: "i18n/en.json"
     };
+  },
+  doesRoutePassFilter: function(route) {
+    if (this.config.filterServices.length == 0){
+        return true; // no filter? always allow the route
+    }
+    for (var legKey in route.legs) {
+        var leg = route.legs[legKey];
+        for(var stepKey in leg.steps) {
+            var step = leg.steps[stepKey];
+            try {
+                var shortName = step.transit_details.line.short_name;
+                console.log("shortName", shortName);
+                if (this.config.filterServices.indexOf(shortName) != -1) {
+                    return true; // passed the filter!
+                }
+            } catch (e) {
+                // step.transit_details.line.short_name not accessible, just carry on
+            }
+        }
+    }
+    return false;
   },
   getDom: function() {
     /* main function creating HTML code to display*/
@@ -207,6 +230,11 @@ Module.register('localtransport', {
             //  break;
             //}
             var route = this.data.routes[routeKey];
+            if (!this.doesRoutePassFilter(route)) {
+                continue;
+            }
+
+            console.debug("route", route);
             var li = document.createElement("li");
             li.className = "small";
             var arrival = 0;
@@ -234,8 +262,8 @@ Module.register('localtransport', {
                     li.innerHTML = "too far";
                     break;
                 }
-                this.renderLeg(li, leg);
                 li.appendChild(tmpwrapper);
+                this.renderLeg(li, leg);
             }
             if (li.innerHTML != "too far"){
                 routeArray.push({"arrival":arrival,"html":li});
